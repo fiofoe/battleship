@@ -2,6 +2,10 @@ pragma solidity >=0.8.2 <0.9.0;
 
 contract Battleship{
 
+    enum CellState { Empty, Ship, ShipHit }
+    uint public dimension = 10;
+    CellState[dimension][dimension] public boardPlayer1; //Schiffe von Player 1, Player 2 schiesst drauf
+    CellState[dimension][dimension] public boardPlayer2; //Schiffe von Player 1, Player 2 schiesst drauf
     enum GameState{
         Created,
         WaitingForPlayer2,
