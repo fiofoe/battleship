@@ -181,10 +181,16 @@ contract Battleship{
 
 
     function endGame() public{
-        (bool success, ) = winner.call{value: address(this).balance}("");
+        require(winner != address(0), "No winner declared");
+        require(phase != GameState.GameOver, "Game already ended");
+
+        phase = GameState.GameOver;
+        uint256 amountToPay = address(this).balance;
+
+        (bool success, ) = winner.call{value: amountToPay}("");
         require(success, "Transfer failed");
 
-        emit Payout(winner, wageredAmount * 2);
+        emit Payout(winner, amountToPay);
     }
 
 }
