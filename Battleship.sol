@@ -1,4 +1,4 @@
-pragma solidity >=0.8.2 <0.9.0;
+pragma solidity >=0.8.2 < 0.9.0;
 
 contract Battleship{
 
@@ -8,6 +8,11 @@ contract Battleship{
     uint8 public dimension = 10;
     uint8[] public shipsizes = [5, 4, 3, 3, 2];
     GameState public phase = GameState.Placements;
+
+    uint32 wageredAmount;
+
+    bool playerAhasDeposited;
+    bool playerBhasDeposited;
 
     enum GameState{
         Created,
@@ -34,6 +39,8 @@ contract Battleship{
     address public player2;
     address public currentTurn;
     address public winner;
+
+
 //events
 
     event ShotFired(
@@ -43,6 +50,8 @@ contract Battleship{
     bool hit,
     bool sunk
     );
+
+    event Payout(address winner, uint256 amount);
 
 // functions
 
@@ -73,6 +82,11 @@ contract Battleship{
                 (y < 9 && opponentBoard[x][y + 1] == CellState.Ship) // check below
              );
         }
+
+        // shipsSunken++
+        // if all ships have sunken
+        // set winning address
+        // endGame()
 
         emit ShotFired(msg.sender, x, y, isHit, isSunk);
 
@@ -164,5 +178,17 @@ contract Battleship{
         }
         require(false, "You are not a Player in this game");
     }
-    
+
+
+    function endGame() public{
+        (bool success, ) = winner.call{value: address(this).balance}("");
+        require(success, "Transfer failed");
+
+        emit Payout(winner, wageredAmount * 2);
+    }
+
 }
+
+
+
+
