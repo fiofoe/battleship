@@ -7,6 +7,7 @@ contract Battleship{
     CellState[][] public boardPlayer2; //Schiffe von Player 2, Player 1 schiesst drauf
     uint8 public dimension = 10;
     uint8[] public shipsizes = [5, 4, 3, 3, 2];
+    uint8 public constant TOTAL_SHIPS = 5;
     GameState public phase = GameState.Placements;
 
     uint32 wageredAmount;
@@ -14,9 +15,11 @@ contract Battleship{
     bool playerAhasDeposited;
     bool playerBhasDeposited;
 
+    uint8 public shipsSunkByPlayer1;
+    uint8 public shipsSunkByPlayer2;
+
     enum GameState{
         Created,
-        WaitingForPlayer2,
         Placements,
         Player1Turn,
         Player2Turn,
@@ -62,6 +65,7 @@ contract Battleship{
             "It is not your turn"
         );
         require(x < dimension && y < dimension, "Invalid coordinates");
+        // require(phase == GameState.Player1Turn || phase == GameState.Player2Turn, "Game not active");
 
         //determine board
         CellState[][] storage opponentBoard = (msg.sender == player1) ? boardPlayer2 : boardPlayer1;
@@ -75,19 +79,68 @@ contract Battleship{
         if (opponentBoard[x][y] == CellState.Ship) {
             isHit = true;
             opponentBoard[x][y] = CellState.ShipHit;
-            isSunk = !(
-                (x > 0 && opponentBoard[x - 1][y] == CellState.Ship) || // check left
-                (x < 9 && opponentBoard[x + 1][y] == CellState.Ship) || // check right
-                (y > 0 && opponentBoard[x][y - 1] == CellState.Ship) || // check above
-                (y < 9 && opponentBoard[x][y + 1] == CellState.Ship) // check below
-             );
-        }
 
-        // shipsSunken++
-        // if all ships have sunken
-        // set winning address
+            bool foundRemainingShip = false;
+            // scan left
+            for (int i = int(x) - 1; 1 >= 0; i--) {
+                if (opponentBoard[uint8(i)][y] == CellState.Ship) {
+                    foundRemainingShip = true;
+                    break;
+                }
+                if (opponentBoard[uint8(i)][y] == CellState.Empty) {
+                    break;
+                }
+            }
+            // scan right
+            for (uint8 i = x + 1; i < dimension && !foundRemainingShip; i++) {
+                 if (opponentBoard[i][y] == CellState.Ship) {
+                    foundRemainingShip = true;
+                    break;
+                }
+                if (opponentBoard[i][y] == CellState.Empty) {
+                    break;
+                }
+            }
+            // scan up
+            for (uint8 j = y - 1; j >= 0 && !foundRemainingShip; j--) {
+                if (opponentBoard[x][j] == CellState.Ship) {
+                    foundRemainingShip ) true;
+                    break;
+                }
+                if (opponentBoard[x][j] == CellState.Empty) {
+                    break;
+                }
+            }
+             // scan down
+            for (uint8 j = y + 1; j < dimension && !foundRemainingShip; j++) {
+                if (opponentBoard[x][j] == CellState.Ship) {
+                    foundRemainingShip = true;
+                    break;
+                }
+                if (opponentBoard[x][j] == CellState.Empty) {
+                    break;
+                }
+
+                isSunk = !foundRemainingShip;
+
+                if (isSunk) {
+                    if(msg.sender == player1) {
+                        shipsSunkByPlayer1++;
+                        if (shipsSunkByPlayer1 == TOTAL_SHIPS) {
+                            winner = player1;
+                            endGame();
+                        }
+                    } else {
+                        shipsSunkByPlayer2++;
+                        if (shipsSunkByPlayer2 == TOTAL_SHIPS) {
+                            winner = player2;
+                            endGame();
+                        }
+                    }
+                }
+            }
+
         // endGame()
-
         emit ShotFired(msg.sender, x, y, isHit, isSunk);
 
         // switch turns only if miss
@@ -194,7 +247,3 @@ contract Battleship{
     }
 
 }
-
-
-
-
