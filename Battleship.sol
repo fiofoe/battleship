@@ -58,7 +58,7 @@ contract Battleship{
 
 // functions
 
-    function shoot(uint8 x, uint8 y) external returns (bool hitResult) {
+    function shoot(uint8 x, uint8 y) external returns (bool hitResult){
         require(
             (msg.sender == player1 && currentTurn == player1) ||
             (msg.sender == player2 && currentTurn == player2), 
@@ -82,64 +82,73 @@ contract Battleship{
 
             bool foundRemainingShip = false;
             // scan left
-            for (int i = int(x) - 1; 1 >= 0; i--) {
-                if (opponentBoard[uint8(i)][y] == CellState.Ship) {
+            if (x > 0) {
+                for (int i = int(uint256(x)) - 1; i >= 0; i--) {
+                if (opponentBoard[uint8(uint256(i))][y] == CellState.Ship) {
                     foundRemainingShip = true;
+                  break;
+                }
+                if (opponentBoard[uint8(uint256(i))][y] == CellState.Empty) {
                     break;
                 }
-                if (opponentBoard[uint8(i)][y] == CellState.Empty) {
-                    break;
                 }
+
             }
             // scan right
-            for (uint8 i = x + 1; i < dimension && !foundRemainingShip; i++) {
-                 if (opponentBoard[i][y] == CellState.Ship) {
-                    foundRemainingShip = true;
-                    break;
-                }
-                if (opponentBoard[i][y] == CellState.Empty) {
-                    break;
+            if (x < dimension - 1) {
+                for (uint8 i = x + 1; i < dimension; i++) {
+                    if (opponentBoard[i][y] == CellState.Ship) {
+                        foundRemainingShip = true;
+                        break;
+                    }
+                    if (opponentBoard[i][y] == CellState.Empty) {
+                        break;
+                    }
                 }
             }
             // scan up
-            for (uint8 j = y - 1; j >= 0 && !foundRemainingShip; j--) {
-                if (opponentBoard[x][j] == CellState.Ship) {
-                    foundRemainingShip ) true;
-                    break;
-                }
-                if (opponentBoard[x][j] == CellState.Empty) {
-                    break;
+            if (y > 0) {
+                for (int j = int(uint256(y)) - 1; j >= 0 ; j--) {
+                    if (opponentBoard[x][uint8(uint256(j))] == CellState.Ship) {
+                        foundRemainingShip = true;
+                        break;
+                    }
+                    if (opponentBoard[x][uint8(uint256(j))] == CellState.Empty) {
+                        break;
+                    }
                 }
             }
              // scan down
-            for (uint8 j = y + 1; j < dimension && !foundRemainingShip; j++) {
-                if (opponentBoard[x][j] == CellState.Ship) {
-                    foundRemainingShip = true;
-                    break;
-                }
-                if (opponentBoard[x][j] == CellState.Empty) {
-                    break;
-                }
-
-                isSunk = !foundRemainingShip;
-
-                if (isSunk) {
-                    if(msg.sender == player1) {
-                        shipsSunkByPlayer1++;
-                        if (shipsSunkByPlayer1 == TOTAL_SHIPS) {
-                            winner = player1;
-                            endGame();
-                        }
-                    } else {
-                        shipsSunkByPlayer2++;
-                        if (shipsSunkByPlayer2 == TOTAL_SHIPS) {
-                            winner = player2;
-                            endGame();
-                        }
+            if (y < dimension - 1)  {
+                for (uint8 j = y + 1; j < dimension; j++) {
+                    if (opponentBoard[x][j] == CellState.Ship) {
+                        foundRemainingShip = true;
+                        break;
+                    }
+                    if (opponentBoard[x][j] == CellState.Empty) {
+                        break;
                     }
                 }
             }
 
+            isSunk = !foundRemainingShip;
+
+            if (isSunk) {
+                if(msg.sender == player1) {
+                    shipsSunkByPlayer1++;
+                    if (shipsSunkByPlayer1 == TOTAL_SHIPS) {
+                        winner = player1;
+                        endGame();
+                    }
+                } else {
+                    shipsSunkByPlayer2++;
+                    if (shipsSunkByPlayer2 == TOTAL_SHIPS) {
+                        winner = player2;
+                        endGame();
+                    }
+                }
+            }
+        }
         // endGame()
         emit ShotFired(msg.sender, x, y, isHit, isSunk);
 
@@ -148,7 +157,7 @@ contract Battleship{
             currentTurn = (currentTurn == player1) ? player2 : player1;
         }
 
-        return isHit;
+        return (isHit);
     }
 
 
