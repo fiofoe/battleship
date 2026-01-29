@@ -3,11 +3,10 @@ pragma solidity >=0.8.2 < 0.9.0;
 contract Battleship{
 
     enum CellState { Empty, Ship, ShipHit }
-    CellState[][] public boardPlayer1; //Schiffe von Player 1, Player 2 schiesst drauf
-    CellState[][] public boardPlayer2; //Schiffe von Player 2, Player 1 schiesst drauf
+    CellState[][] private boardPlayer1; //Schiffe von Player 1, Player 2 schiesst drauf
+    CellState[][] private boardPlayer2; //Schiffe von Player 2, Player 1 schiesst drauf
     uint8 public dimension = 10;
     uint8[] public shipsizes = [5, 4, 3, 3, 2];
-    uint8 public constant TOTAL_SHIPS = 5;
     GameState public phase = GameState.Placements;
 
     uint32 wageredAmount;
@@ -38,9 +37,9 @@ contract Battleship{
         uint8 length;
     }
 
-    address public player1;
-    address public player2;
-    address public currentTurn;
+    address public player1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    address public player2 = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
+    address public currentTurn = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
     address public winner;
 
 
@@ -55,6 +54,21 @@ contract Battleship{
     );
 
     event Payout(address winner, uint256 amount);
+
+//constructor
+    constructor(address P1, address P2, bool P1Starts, uint8 Board_Dimension, uint8[] memory Ship_Sizes ){
+        player1 = P1;
+        player2 = P2;
+        dimension = Board_Dimension;
+        shipsizes = Ship_Sizes;
+        if(P1Starts)
+        {
+            currentTurn = P1;
+        }
+        else {
+            currentTurn = P2;
+        }
+    }
 
 // functions
 
@@ -136,13 +150,13 @@ contract Battleship{
             if (isSunk) {
                 if(msg.sender == player1) {
                     shipsSunkByPlayer1++;
-                    if (shipsSunkByPlayer1 == TOTAL_SHIPS) {
+                    if (shipsSunkByPlayer1 == shipsizes.length) {
                         winner = player1;
                         endGame();
                     }
                 } else {
                     shipsSunkByPlayer2++;
-                    if (shipsSunkByPlayer2 == TOTAL_SHIPS) {
+                    if (shipsSunkByPlayer2 == shipsizes.length) {
                         winner = player2;
                         endGame();
                     }
@@ -255,4 +269,18 @@ contract Battleship{
         emit Payout(winner, amountToPay);
     }
 
+}
+
+contract Deployer{
+    event InstanceCreation(Battleship instance);
+    
+    function newGameInstance (address P1, address P2, uint8 Board_Dimension, uint8[] memory Ship_Sizes)
+    public
+    returns (Battleship GameAddress)
+    {
+        Battleship instance = new Battleship(P1,  P2, true, Board_Dimension, Ship_Sizes);
+        emit InstanceCreation(instance);
+        return instance;
+        
+    }
 }
