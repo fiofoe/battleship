@@ -12,7 +12,7 @@ contract Battleship{
 
 
     uint256 lastInteraction;
-    uint256 wageredAmount;
+    uint256 public wageredAmount;
 
     bool player1hasDeposited = false;
     bool player2hasDeposited = false;
@@ -42,9 +42,9 @@ contract Battleship{
         uint8 length;
     }
 
-    address public player1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
-    address public player2 = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
-    address public currentTurn = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    address public player1;
+    address public player2;
+    address public currentTurn;
     address public startingPlayer;
     address public winner;
 
@@ -367,6 +367,7 @@ contract Battleship{
 
 
     function reset() public {
+        require(phase == GameState.GameOver, "Game is still in progress");
         lastInteraction = block.timestamp;
         phase = GameState.Created;
         winner = address(0);
@@ -384,14 +385,35 @@ contract Battleship{
 }
 
 contract Deployer{
+    //variables
+    uint public randnonce = 0;
+
+    //Events
     event InstanceCreation(address P1, address P2, address Starting_Player, uint8 Board_Dimension, uint8[] Ship_Sizes, uint256 wager, Battleship Instance);
+
+    //Structs
+    struct request
+    {
+        uint256 wager;
+        uint8 Board_Dimension;
+        uint8[] Ship_Sizes;
+        address P1;
+    }
+
+    //functions
+
+    function makeCustomRequest  (uint256 wager, uint8 Board_Dimension, uint8[] memory Ship_Sizes)public{
+        return;
+    }
     
     function newGameInstance (address P1, address P2, uint8 Board_Dimension, uint8[] memory Ship_Sizes, uint256 wager)
     public
     returns (Battleship GameAddress)
     {
         Battleship instance = new Battleship(P1,  P2, true, Board_Dimension, Ship_Sizes, wager);
-        address starter = P1;
+        randnonce++;
+        uint rand = uint(keccak256(abi.encodePacked(block.timestamp,P1,P2,randnonce))) % 2;
+        address starter =(rand==0) ? P1 : P2;
         emit InstanceCreation(P1,  P2, starter, Board_Dimension, Ship_Sizes, wager,instance);
         return instance;
         
