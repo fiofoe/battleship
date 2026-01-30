@@ -3,16 +3,21 @@ pragma solidity >=0.8.2 < 0.9.0;
 contract Battleship{
 
     enum CellState { Empty, Ship, ShipHit }
-    CellState[][] private boardPlayer1; //Schiffe von Player 1, Player 2 schiesst drauf
-    CellState[][] private boardPlayer2; //Schiffe von Player 2, Player 1 schiesst drauf
+    CellState[][] public boardPlayer1; //Schiffe von Player 1, Player 2 schiesst drauf
+    CellState[][] public boardPlayer2; //Schiffe von Player 2, Player 1 schiesst drauf
     uint8 public dimension = 10;
     uint8[] public shipsizes = [5, 4, 3, 3, 2];
-    GameState public phase = GameState.Placements;
+    GameState public phase = GameState.Created;
+    uint timeout = 24 hours;
 
-    uint32 wageredAmount;
 
-    bool playerAhasDeposited;
-    bool playerBhasDeposited;
+    uint256 lastInteraction;
+    uint256 wageredAmount;
+
+    bool player1hasDeposited = false;
+    bool player2hasDeposited = false;
+    bool player1hasPlaced = false;
+    bool player2hasPlaced = false;
 
     uint8 public shipsSunkByPlayer1;
     uint8 public shipsSunkByPlayer2;
@@ -20,8 +25,8 @@ contract Battleship{
     enum GameState{
         Created,
         Placements,
-        Player1Turn,
-        Player2Turn,
+        GameStarted,
+        Payout,
         GameOver
     }
 
@@ -40,11 +45,17 @@ contract Battleship{
     address public player1 = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
     address public player2 = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
     address public currentTurn = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    address public startingPlayer;
     address public winner;
 
 
 //events
-
+    event Deposit_Made(address payee, uint256 amount);
+    event Game_Start();
+    event Placements_Start();
+    event Placement(address player);
+    event Default(address winnerByDefault);
+    event Reset();
     event ShotFired(
     address indexed shooter,
     uint8 x,
@@ -56,23 +67,48 @@ contract Battleship{
     event Payout(address winner, uint256 amount);
 
 //constructor
-    constructor(address P1, address P2, bool P1Starts, uint8 Board_Dimension, uint8[] memory Ship_Sizes ){
+    constructor(address P1, address P2, bool P1Starts, uint8 Board_Dimension, uint8[] memory Ship_Sizes, uint256 Entry_Fee ){
         player1 = P1;
         player2 = P2;
         dimension = Board_Dimension;
         shipsizes = Ship_Sizes;
-        if(P1Starts)
-        {
-            currentTurn = P1;
-        }
-        else {
-            currentTurn = P2;
-        }
+        wageredAmount = Entry_Fee;
+        phase = GameState.Created;
+        currentTurn = (P1Starts) ? player1 : player2;
+        startingPlayer=currentTurn;
+        shipsSunkByPlayer1 = 0;
+        shipsSunkByPlayer2 = 0;
+        lastInteraction = block.timestamp;
     }
 
 // functions
 
+    function deposit() payable external{
+        require(msg.sender ==player1 || msg.sender == player2, "You are not a player");
+        require(phase==GameState.Created, "Game has already started");
+        if(msg.sender == player1)
+        {   
+            require(!player1hasDeposited, "You have already payed");
+            require(msg.value == wageredAmount, "Please deposit the correct amount");
+            player1hasDeposited = true;
+            emit Deposit_Made(player1, msg.value);
+        }
+        else if(msg.sender == player2)
+        {
+            require(!player2hasDeposited, "You have already payed");
+            require(msg.value == wageredAmount, "Please deposit the correct amount");
+            player2hasDeposited = true;
+            emit Deposit_Made(player1, msg.value);
+        }
+        if(player1hasDeposited && player2hasDeposited) {
+            phase = GameState.Placements;
+            emit Placements_Start();
+        }
+        lastInteraction = block.timestamp;
+    }
+
     function shoot(uint8 x, uint8 y) external returns (bool hitResult){
+        require(phase == GameState.GameStarted, "The Game is not in progress");
         require(
             (msg.sender == player1 && currentTurn == player1) ||
             (msg.sender == player2 && currentTurn == player2), 
@@ -152,12 +188,14 @@ contract Battleship{
                     shipsSunkByPlayer1++;
                     if (shipsSunkByPlayer1 == shipsizes.length) {
                         winner = player1;
+                        phase = GameState.Payout;
                         endGame();
                     }
                 } else {
                     shipsSunkByPlayer2++;
                     if (shipsSunkByPlayer2 == shipsizes.length) {
                         winner = player2;
+                        phase = GameState.Payout;
                         endGame();
                     }
                 }
@@ -170,12 +208,13 @@ contract Battleship{
         if (!isHit) {
             currentTurn = (currentTurn == player1) ? player2 : player1;
         }
-
+        lastInteraction = block.timestamp;
         return (isHit);
     }
 
 
     function place(uint8  [][] calldata placements) external returns (bool valid){ //definiert nur für player 1
+        require(msg.sender ==player1 || msg.sender == player2, "You are not a player");
         require(phase ==GameState.Placements, "No changes to Placements are accepted at this time");
         CellState[][] memory board = new CellState[][](dimension);
         for(uint8 col=0; col<dimension; col++){
@@ -201,7 +240,7 @@ contract Battleship{
                     require(board[x-1][y]!=CellState.Ship, "Adjacent placings are prohibeted");
                 }
                 if(x<dimension-length){
-                    require(board[x+length][y]!=CellState.Ship, "Adjacent placings are prohibeted");
+                    require(board[x+length][y]!=CellState.Ship, "Adjacent placings are prohibited");
                 }
                 
                 for(uint8 j=0; j<length; j++){
@@ -210,7 +249,7 @@ contract Battleship{
                     {
                         require(board[x+j][y-1]!=CellState.Ship, "Adjacent placings are prohibeted");
                     }
-                    if(y<dimension-1)
+                    if(y<dimension-1) 
                     {
                         require(board[x+j][y+1]!=CellState.Ship, "Adjacent placings are prohibeted");
                     }
@@ -245,20 +284,77 @@ contract Battleship{
         if(msg.sender == player1)
         {
             boardPlayer1 = board;
-            return true;
+            player1hasPlaced = true;
+            emit Placement(player1);
+          
         }
         else if(msg.sender == player2)
         {
             boardPlayer2 = board;
-            return true;
+            player2hasPlaced = true;
+            emit Placement(player2);
+            
         }
-        require(false, "You are not a Player in this game");
+        if(player1hasPlaced && player2hasPlaced){
+            phase = GameState.GameStarted;
+            emit Game_Start();
+        }
+        lastInteraction = block.timestamp;
     }
 
 
-    function endGame() public{
+    function claimDefault() public{
+        require(msg.sender == player1 || msg.sender == player2, "You are not a player");
+        uint time = block.timestamp;
+        if(phase==GameState.Created)
+        {
+            require((time-lastInteraction)>timeout, "Time limit not reached yet");
+            if(player1hasDeposited && !player2hasDeposited){
+                winner = player1;
+                phase = GameState.Payout;
+                emit Default(player1);
+                endGame();
+            }
+            else if (!player1hasDeposited && player2hasDeposited)
+            {
+                winner = player2;
+                phase = GameState.Payout;
+                emit Default(player2);
+                endGame();
+            }
+        }
+        else if(phase == GameState.Placements){
+            require((time-lastInteraction)>timeout, "Time limit not reached yet");
+            if(player1hasPlaced && !player2hasPlaced){
+                winner = player1;
+                phase = GameState.Payout;
+                emit Default(player1);
+                endGame();
+            }
+            else if (!player1hasPlaced && player2hasPlaced)
+            {
+                winner = player2;
+                phase = GameState.Payout;
+                emit Default(player2);
+                endGame();
+            }
+        }
+        else if(phase==GameState.GameStarted)
+        {
+            require((time-lastInteraction)>timeout, "Time limit not reached yet");
+            winner = (currentTurn == player1) ? player2 : player1;
+            phase = GameState.Payout;
+            emit Default(winner);
+            endGame();
+            
+        }
+        require(false, "It is not possible to claim a default in this stage of the game");
+    }
+
+    function endGame() private{
         require(winner != address(0), "No winner declared");
-        require(phase != GameState.GameOver, "Game already ended");
+
+        require(phase == GameState.Payout, "Not in the Payout Stage");
 
         phase = GameState.GameOver;
         uint256 amountToPay = address(this).balance;
@@ -269,18 +365,37 @@ contract Battleship{
         emit Payout(winner, amountToPay);
     }
 
+
+    function reset() public {
+        lastInteraction = block.timestamp;
+        phase = GameState.Created;
+        winner = address(0);
+        startingPlayer = (startingPlayer == player1) ? player2 : player1;
+        currentTurn = startingPlayer;
+        shipsSunkByPlayer1 = 0;
+        shipsSunkByPlayer2 = 0;
+        player1hasDeposited = false;
+        player2hasDeposited = false;
+        player1hasPlaced = false;
+        player2hasPlaced = false;
+        emit Reset();
+    }
+
 }
 
 contract Deployer{
-    event InstanceCreation(Battleship instance);
+    event InstanceCreation(address P1, address P2, address Starting_Player, uint8 Board_Dimension, uint8[] Ship_Sizes, uint256 wager, Battleship Instance);
     
-    function newGameInstance (address P1, address P2, uint8 Board_Dimension, uint8[] memory Ship_Sizes)
+    function newGameInstance (address P1, address P2, uint8 Board_Dimension, uint8[] memory Ship_Sizes, uint256 wager)
     public
     returns (Battleship GameAddress)
     {
-        Battleship instance = new Battleship(P1,  P2, true, Board_Dimension, Ship_Sizes);
-        emit InstanceCreation(instance);
+        Battleship instance = new Battleship(P1,  P2, true, Board_Dimension, Ship_Sizes, wager);
+        address starter = P1;
+        emit InstanceCreation(P1,  P2, starter, Board_Dimension, Ship_Sizes, wager,instance);
         return instance;
         
     }
+
+
 }
