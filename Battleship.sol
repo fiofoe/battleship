@@ -79,6 +79,7 @@ contract Battleship{
         shipsSunkByPlayer1 = 0;
         shipsSunkByPlayer2 = 0;
         lastInteraction = block.timestamp;
+    
     }
 
 // functions
@@ -98,7 +99,7 @@ contract Battleship{
             require(!player2hasDeposited, "You have already payed");
             require(msg.value == wageredAmount, "Please deposit the correct amount");
             player2hasDeposited = true;
-            emit Deposit_Made(player1, msg.value);
+            emit Deposit_Made(player2, msg.value);
         }
         if(player1hasDeposited && player2hasDeposited) {
             phase = GameState.Placements;
