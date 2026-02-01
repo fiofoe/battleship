@@ -213,7 +213,7 @@ contract Battleship{
     }
 
 
-    function place(uint8  [][] calldata placements) external returns (bool valid){ //definiert nur für player 1
+    function place(uint8  [][] calldata placements) external returns (bool valid){ 
         require(msg.sender ==player1 || msg.sender == player2, "You are not a player");
         require(phase ==GameState.Placements, "No changes to Placements are accepted at this time");
         CellState[][] memory board = new CellState[][](dimension);
@@ -385,27 +385,72 @@ contract Battleship{
 }
 
 contract Deployer{
-    //variables
-    uint public randnonce = 0;
-
-    //Events
-    event InstanceCreation(address P1, address P2, address Starting_Player, uint8 Board_Dimension, uint8[] Ship_Sizes, uint256 wager, Battleship Instance);
-
-    //Structs
-    struct request
+    //structs
+   /* struct request
     {
         uint256 wager;
         uint8 Board_Dimension;
         uint8[] Ship_Sizes;
         address P1;
     }
+    */
+    
+    //variables
+    //mapping (address => request) requests;
+    
+
+
+    uint public randnonce = 0;
+    address private waiting = address(0);
+    uint256 public standardWager = 10000000000000000;
+    uint8 public standardBoardDimension = 10;
+    uint8[] public standardShipSizes = [5,4,3,3,2];
+
+
+    //Events
+    event InstanceCreation(address P1, address P2, address Starting_Player, uint8 Board_Dimension, uint8[] Ship_Sizes, uint256 wager, Battleship Instance);
+    event MatchFound (address P1, address P2, Battleship Instance);
+    event AddedToSimpleWaitingList ( address Waitee);
+    event RemovedFromSimpleWaitingList (address Removee);
+
+ 
+    
 
     //functions
 
-    function makeCustomRequest  (uint256 wager, uint8 Board_Dimension, uint8[] memory Ship_Sizes)public{
-        return;
+    function makeSimpleRequest () public {
+        if(waiting == address(0)){
+            waiting = msg.sender;
+            emit AddedToSimpleWaitingList(msg.sender);
+        }
+        else
+        {
+            require(msg.sender!=waiting, "You are already on the waiting list");
+            Battleship instance = newGameInstance(waiting, msg.sender, standardBoardDimension, standardShipSizes, standardWager);
+            emit MatchFound(waiting, msg.sender, instance);
+            
+        }
     }
-    
+    function requestRemoval() public{
+        require(msg.sender == waiting, "You are not currently on the waiting list");
+        waiting = address(0);
+        emit RemovedFromSimpleWaitingList(msg.sender);
+    }
+
+    /*
+    function makeCustomRequest  (uint256 wager, uint8 Board_Dimension, uint8[] calldata Ship_Sizes)public{
+        request storage req;
+
+        req.wager = wager;
+        req.Board_Dimension = Board_Dimension;
+        req.Ship_Sizes = Ship_Sizes;
+
+        requests[msg.sender] = req;
+    }
+    */
+
+
+
     function newGameInstance (address P1, address P2, uint8 Board_Dimension, uint8[] memory Ship_Sizes, uint256 wager)
     public
     returns (Battleship GameAddress)
