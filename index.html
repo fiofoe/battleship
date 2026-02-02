@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battleship</title>
+
+    <link rel="stylesheet" href="style.css">
+    <script src="ethers.js"></script>
+    <script type="module" src="script.js"></script>
+
+</head>
+<body>
+
+<p id="wager" style="visibility: hidden">Wager: </p>
+
+<p id="gameContractId" style="visibility: hidden">Game Contract Id: </p>
+
+
+<table id="playerStatusTable">
+    <thead>
+    <tr>
+        <th>Player Address</th>
+        <th>Deposited</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td id="player1Address">Not Connected</td>
+        <td id="player1Deposited">No</td>
+    </tr>
+    <tr>
+        <td id="player2Address">Not Connected</td>
+        <td id="player2Deposited">No</td>
+    </tr>
+    </tbody>
+</table>
+
+<p id="player" style="visibility: hidden"></p>
+
+<p>Game State: <span id="gameState">Game Not Started</span></p>
+
+<button id="joinQueueBtn" >Join Queue</button>
+<button id="leaveQueueBtn" style="visibility: hidden">Leave Queue</button>
+
+<button id="depositBtn" style="visibility: hidden">Make Deposit</button>
+
+<button id="resetGameBtn" style="visibility: hidden">Reset Game</button>
+
+<div id="gameBoardOwn">
+    <h3 style="visibility: hidden" id="ownHeader">Own Board</h3>
+    <table class="battleShipTable" id="battleShipTableOwn"></table>
+</div>
+
+<div style="visibility: hidden" id="ship-dock-container">
+    <h3>Your Fleet</h3>
+    <div id="ship-dock"></div>
+</div>
+
+<div style="visibility: hidden" id="controls">
+    <button id="commitBtn" disabled>Commit Fleet</button>
+    <button id="resetBtn" >Reset Board</button>
+</div>
+
+<div id="gameBoardOpp">
+    <h3 style="visibility: hidden" id="oppHeader">Opponents Board</h3>
+    <table class="battleShipTable" id="battleShipTableOpp"></table>
+</div>
+
+
+
+
+
+</body>
+</html>

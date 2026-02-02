@@ -1,0 +1,108 @@
+.battleShipTable {
+    border-collapse: collapse;
+    margin: 20px auto;
+    background-color: #1a1a2e; /* Deep ocean blue */
+}
+
+.game-cell {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #4e4e6a;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.game-cell:hover {
+    background-color: #0f3460;
+}
+
+
+.hit { background-color: #e94560 !important; }
+.miss { background-color: #00d2ff !important; }
+
+.ship-placed.hit,
+.ship-start-horizontal.hit,
+.ship-start-vertical.hit,
+.ship-end-horizontal.hit,
+.ship-end-vertical.hit{
+    background-color: #ff0000 !important;
+    border: 2px solid #8b0000;
+    box-shadow: inset 0 0 10px #000;
+}
+
+
+#ship-dock {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px;
+    background: #16213e;
+    border-radius: 8px;
+}
+
+.ship {
+    display: flex;
+    cursor: grab;
+    transition: transform 0.2s;
+}
+
+/* Horizontal styling */
+.ship[data-orientation="horizontal"] {
+    flex-direction: row;
+}
+
+/* Vertical styling */
+.ship[data-orientation="vertical"] {
+    flex-direction: column;
+}
+
+.ship-segment {
+    width: 38px;
+    height: 38px;
+    background-color: #4e4e6a;
+    border: 1px solid #0f3460;
+}
+
+.dragging {
+    opacity: 0.5;
+}
+
+.ship:active {
+    cursor: grabbing;
+}
+
+.drag-over {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border: 2px dashed #fff;
+}
+
+.ship-placed {
+    background-color: #4e4e6a !important;
+    border: 1px solid #1a1a2e;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.ship-start-horizontal { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.ship-end-horizontal { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+.ship-start-vertical { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+.ship-end-vertical { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+
+#playerStatusTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-family: sans-serif;
+}
+
+#playerStatusTable>th, #playerStatusTable>td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #2c3e50;
+    color: white;
+}
