@@ -79,7 +79,6 @@ contract Battleship{
         shipsSunkByPlayer1 = 0;
         shipsSunkByPlayer2 = 0;
         lastInteraction = block.timestamp;
-    
     }
 
 // functions
@@ -99,7 +98,7 @@ contract Battleship{
             require(!player2hasDeposited, "You have already payed");
             require(msg.value == wageredAmount, "Please deposit the correct amount");
             player2hasDeposited = true;
-            emit Deposit_Made(player2, msg.value);
+            emit Deposit_Made(player1, msg.value);
         }
         if(player1hasDeposited && player2hasDeposited) {
             phase = GameState.Placements;
@@ -429,9 +428,11 @@ contract Deployer{
             require(msg.sender!=waiting, "You are already on the waiting list");
             Battleship instance = newGameInstance(waiting, msg.sender, standardBoardDimension, standardShipSizes, standardWager);
             emit MatchFound(waiting, msg.sender, instance);
+            waiting = address(0);
             
         }
     }
+    
     function requestRemoval() public{
         require(msg.sender == waiting, "You are not currently on the waiting list");
         waiting = address(0);
