@@ -457,10 +457,10 @@ contract Deployer{
     public
     returns (Battleship GameAddress)
     {
-        Battleship instance = new Battleship(P1,  P2, true, Board_Dimension, Ship_Sizes, wager);
         randnonce++;
         uint rand = uint(keccak256(abi.encodePacked(block.timestamp,P1,P2,randnonce))) % 2;
         address starter =(rand==0) ? P1 : P2;
+        Battleship instance = new Battleship(P1,  P2, (rand==0), Board_Dimension, Ship_Sizes, wager);
         emit InstanceCreation(P1,  P2, starter, Board_Dimension, Ship_Sizes, wager,instance);
         return instance;
         
