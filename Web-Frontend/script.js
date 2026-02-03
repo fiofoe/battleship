@@ -1,3 +1,4 @@
+import {toNumber} from "./ethers";
 
 const deployerAddress = "0xE455ADC37b5447629aF36847200472fCf553415E"
 
@@ -301,7 +302,9 @@ async function commitFleet() {
 
 function resetShips() {
     console.log("Resseting Ship Placement");
-    placements = [];
+    for(let i = 0; i < shipSizes.length; i++) {
+        placements[i] = -1;
+    }
     const headerOwn = document.getElementById("ownHeader");
     headerOwn.style.visibility = "visible";
     const tableOwn = document.getElementById("battleShipTableOwn");
@@ -361,7 +364,7 @@ function checkIfAllShipsPlaced() {
     let amount = shipSizes.length
     console.log(amount)
 
-    if (placements.length === amount) {
+    if (placements.length === amount && !placements.includes(-1)) {
         commitBtn.disabled = false;
         console.log("All ships placed! Ready to commit.");
     } else {
@@ -372,12 +375,11 @@ function checkIfAllShipsPlaced() {
 function handleShipDrop(shipElement, row, col) {
     const size = parseInt(shipElement.dataset.size);
     const orientation = shipElement.dataset.orientation;
-    const dim = 10; // Assuming a 10x10 board
 
 
     // Check out of bounds
-    if (orientation === "horizontal" && (col + size) > dim) return alert("Out of bounds!");
-    if (orientation === "vertical" && (row + size) > dim) return alert("Out of bounds!");
+    if (orientation === "horizontal" && (col + size) > boardDim) return alert("Out of bounds!");
+    if (orientation === "vertical" && (row + size) > boardDim) return alert("Out of bounds!");
 
     // Check if Cell is free
     for (let i = 0; i < size; i++) {
@@ -404,9 +406,21 @@ function handleShipDrop(shipElement, row, col) {
 
 
     }
-    placements.push([col, row, orientation === "vertical" ? 1 : 0])
+    console.log(typeof size)
+    console.log(typeof shipSizes[0])
+
+    console.log(typeof shipSizes[0])
+
+    for(let i = 0; i < shipSizes.length; i++) {
+        if(shipSizes[i] === size && placements[i] === -1) {
+            console.log(i);
+            placements[i] = [col, row, orientation === "vertical" ? 1 : 0];
+            break;
+        }
+    }
 
     console.log(placements)
+    console.log(size)
 
     shipElement.style.visibility = "hidden";
     shipElement.draggable = false;
@@ -451,8 +465,12 @@ function initGame(p1, p2, starter, dim, sizes, wager, instanceAddress) {
     addressP1 = p1;
     addressP2 = p2;
     boardDim = dim;
-    shipSizes = sizes
-    gameContractAddress = instanceAddress
+    shipSizes = sizes;
+    for(let i = 0; i < shipSizes.length; i++) {
+        placements[i] = -1;
+    }
+
+    gameContractAddress = instanceAddress;
     startingPlayer = starter;
     currentTurn = starter;
     gameWager = wager;
@@ -612,6 +630,8 @@ if (window.ethereum) {
 // Debug Functions
 window.debugInfo = debugInfo;
 window.debugSwitchPlayers = debugSwitchPlayers;
+window.debugTypes = debugTypes;
+
 function debugInfo() {
     return `Player: ${player}
             CurrentTurn: ${currentTurn}`;
@@ -624,5 +644,17 @@ function debugSwitchPlayers() {
     }
     displayPlayerTurn();
     return ""
+}
 
+function debugTypes() {
+
+    console.log(shipSizes[0])
+    console.log(typeof shipSizes[0])
+    let i  = 1;
+    console.log(typeof i)
+    console.log(toNumber(shipSizes[0]) === i)
+    console.log(toNumber(shipSizes[0]) == i)
+
+    console.log(Number(shipSizes[0]) === i)
+    console.log(Number(shipSizes[0]) == i)
 }
