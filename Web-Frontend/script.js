@@ -1,5 +1,3 @@
-import {toNumber} from "./ethers";
-
 const deployerAddress = "0xE455ADC37b5447629aF36847200472fCf553415E"
 
 import { DEPLOYER_ABI, BATTLESHIP_ABI } from './abis.js';
@@ -658,3 +656,4 @@ function debugTypes() {
     console.log(Number(shipSizes[0]) === i)
     console.log(Number(shipSizes[0]) == i)
 }
+
