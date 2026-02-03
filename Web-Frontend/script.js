@@ -1,4 +1,3 @@
-
 const deployerAddress = "0xE455ADC37b5447629aF36847200472fCf553415E"
 
 import { DEPLOYER_ABI, BATTLESHIP_ABI } from './abis.js';
@@ -74,25 +73,29 @@ function resetGame() {
 
     document.getElementById("leaveQueueBtn").style.visibility = "hidden";
     const depositBtn = document.getElementById("depositBtn");
+    const commmitBtn = document.getElementById("commmitBtn");
     depositBtn.style.visibility = "hidden";
     document.getElementById("resetBtn").style.visibility = "hidden";
-
-    document.getElementById("gameBoardOwn").style.visibility = "hidden";
-    document.getElementById("gameBoardOpp").style.visibility = "hidden";
 
     document.getElementById("player1Deposited").innerText = "No";
     document.getElementById("player2Deposited").innerText = "No";
 
+    document.getElementById("ship-dock-container").style.visibility = "hidden";
     document.getElementById("ship-dock-container").style.display = "block";
 
     depositBtn.innerText = "Make Deposit";
     depositBtn.style.backgroundColor = "";
 
+    commitBtn.innerText = "Commit Fleet";
+    commitBtn.style.backgroundColor = "";
+
 
 
     initGame(addressP1, addressP2, startingPlayer, boardDim, shipSizes, gameWager, gameContractAddress);
-    displayGameState();
-}
+    checkIfAllShipsPlaced()
+
+    document.getElementById("gameState").innerText = "Game not Started";
+    }
 
 async function leaveQueue() {
     const deployerContract = new ethers.Contract(deployerAddress, DEPLOYER_ABI, signer);
@@ -301,7 +304,9 @@ async function commitFleet() {
 
 function resetShips() {
     console.log("Resseting Ship Placement");
-    placements = [];
+    for(let i = 0; i < shipSizes.length; i++) {
+        placements[i] = -1;
+    }
     const headerOwn = document.getElementById("ownHeader");
     headerOwn.style.visibility = "visible";
     const tableOwn = document.getElementById("battleShipTableOwn");
@@ -361,7 +366,7 @@ function checkIfAllShipsPlaced() {
     let amount = shipSizes.length
     console.log(amount)
 
-    if (placements.length === amount) {
+    if (placements.length === amount && !placements.includes(-1)) {
         commitBtn.disabled = false;
         console.log("All ships placed! Ready to commit.");
     } else {
@@ -372,12 +377,11 @@ function checkIfAllShipsPlaced() {
 function handleShipDrop(shipElement, row, col) {
     const size = parseInt(shipElement.dataset.size);
     const orientation = shipElement.dataset.orientation;
-    const dim = 10; // Assuming a 10x10 board
 
 
     // Check out of bounds
-    if (orientation === "horizontal" && (col + size) > dim) return alert("Out of bounds!");
-    if (orientation === "vertical" && (row + size) > dim) return alert("Out of bounds!");
+    if (orientation === "horizontal" && (col + size) > boardDim) return alert("Out of bounds!");
+    if (orientation === "vertical" && (row + size) > boardDim) return alert("Out of bounds!");
 
     // Check if Cell is free
     for (let i = 0; i < size; i++) {
@@ -404,9 +408,21 @@ function handleShipDrop(shipElement, row, col) {
 
 
     }
-    placements.push([col, row, orientation === "vertical" ? 1 : 0])
+    console.log(typeof size)
+    console.log(typeof shipSizes[0])
+
+    console.log(typeof shipSizes[0])
+
+    for(let i = 0; i < shipSizes.length; i++) {
+        if(Number(shipSizes[i]) === size && placements[i] === -1) {
+            console.log(i);
+            placements[i] = [col, row, orientation === "vertical" ? 1 : 0];
+            break;
+        }
+    }
 
     console.log(placements)
+    console.log(size)
 
     shipElement.style.visibility = "hidden";
     shipElement.draggable = false;
@@ -451,8 +467,12 @@ function initGame(p1, p2, starter, dim, sizes, wager, instanceAddress) {
     addressP1 = p1;
     addressP2 = p2;
     boardDim = dim;
-    shipSizes = sizes
-    gameContractAddress = instanceAddress
+    shipSizes = sizes;
+    for(let i = 0; i < shipSizes.length; i++) {
+        placements[i] = -1;
+    }
+
+    gameContractAddress = instanceAddress;
     startingPlayer = starter;
     currentTurn = starter;
     gameWager = wager;
@@ -612,6 +632,8 @@ if (window.ethereum) {
 // Debug Functions
 window.debugInfo = debugInfo;
 window.debugSwitchPlayers = debugSwitchPlayers;
+window.debugTypes = debugTypes;
+
 function debugInfo() {
     return `Player: ${player}
             CurrentTurn: ${currentTurn}`;
@@ -624,5 +646,20 @@ function debugSwitchPlayers() {
     }
     displayPlayerTurn();
     return ""
+}
 
+function debugTypes() {
+
+    console.log(shipSizes[0])
+    console.log(typeof shipSizes[0])
+    let i  = 5;
+    console.log(typeof i)
+
+    console.log(typeof Number(shipSizes[0]))
+
+    console.log("--------")
+    console.log(Number(shipSizes[0]))
+    console.log("--------")
+    console.log(Number(shipSizes[0]) === i)
+    console.log(shipSizes[0] == i)
 }
